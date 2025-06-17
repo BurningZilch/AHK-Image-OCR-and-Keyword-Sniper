@@ -1,0 +1,1 @@
+# AHK-Image-OCR-and-Keyword-Sniper
