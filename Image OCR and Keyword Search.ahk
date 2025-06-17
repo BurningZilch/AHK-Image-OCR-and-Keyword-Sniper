@@ -9,7 +9,9 @@ global TESSERACT_PATH := "tesseract" ; Path to your Tesseract executable
 global FFMPEG_PATH := "ffmpeg"       ; Path to your FFmpeg executable
 global SCREENSHOTS_FOLDER := A_ScriptDir "\Screenshots\"
 global OCR_LANGUAGE := "chi_sim"     ; Tesseract language for OCR (Simplified Chinese)
-global SEARCH_KEYWORD := "冰"         ; The keyword to search for in the OCR text
+global SEARCH_KEYWORD := "冰"        ; The keyword to search for in the OCR text
+global NEXT_PAGE_KEY := "a" 	     ;
+global MAX_LOOP := 30
 
 ; ——— Screen Capture Area ———
 global CAPTURE_X := 340
@@ -43,8 +45,8 @@ if !DirExist(SCREENSHOTS_FOLDER) {
 ; ——————————————————————————————————————————————————————————————————————————————————————————————————
 
 RunImageCheck() {
-    Loop 30 {
-        Send 'a' ; Sends the 'a' key
+    Loop MAX_LOOP {
+        Send NEXT_PAGE_KEY ; Sends the 'a' key
         Sleep 200
 
         ; 1. Capture and save the designated screen area
@@ -58,6 +60,9 @@ RunImageCheck() {
         ; 3. Perform OCR on the processed image
         ocrText := PerformOCR(processedImagePath)
         Sleep 500
+
+        ; Debug: Show OCR result (remove this line after testing)
+        ; MsgBox "OCR Result: " . ocrText, "Debug", "T2"
 
         ; 4. Search for the keyword in the OCR result
         if InStr(ocrText, SEARCH_KEYWORD) {
@@ -108,12 +113,26 @@ PreprocessImage(inputPath, outputPath) {
  */
 PerformOCR(imagePath) {
     try {
-        ; Run Tesseract and capture its standard output
-        cmd := Format('"{1}" "{2}" stdout -l {3} --psm 6 --oem 3 -c preserve_interword_spaces=1', TESSERACT_PATH, imagePath, OCR_LANGUAGE)
-        result := RunWait(cmd, "UTF-8", "Hide")
-        return result.StdOut
+        ; Create a temporary file to store OCR output
+        tempFile := A_Temp "\ocr_output_" . A_TickCount . ".txt"
+        
+        ; Run Tesseract with output to file
+        cmd := Format('"{1}" "{2}" "{3}" -l {4} --psm 6 --oem 3 -c preserve_interword_spaces=1', 
+                     TESSERACT_PATH, imagePath, StrReplace(tempFile, ".txt", ""), OCR_LANGUAGE)
+        
+        RunWait cmd, , "Hide"
+        
+        ; Read the output file (Tesseract automatically adds .txt extension)
+        if FileExist(tempFile) {
+            ocrResult := FileRead(tempFile, "UTF-8")
+            FileDelete tempFile ; Clean up temp file
+            return ocrResult
+        } else {
+            MsgBox "OCR output file not created. Check if Tesseract is properly installed and accessible."
+            return ""
+        }
     } catch Error as e {
-        MsgBox "An error occurred during OCR: " e.Message
+        MsgBox "An error occurred during OCR: " . e.Message
         return ""
     }
 }
