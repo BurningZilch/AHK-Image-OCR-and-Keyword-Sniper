@@ -59,7 +59,6 @@ RunImageCheck() {
 
         ; 3. Perform OCR on the processed image
         ocrText := PerformOCR(processedImagePath)
-        Sleep 500
 
         ; Debug: Show OCR result (remove this line after testing)
         ; MsgBox "OCR Result: " . ocrText, "Debug", "T2"
