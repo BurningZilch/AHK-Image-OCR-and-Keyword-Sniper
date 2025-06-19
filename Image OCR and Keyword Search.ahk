@@ -63,6 +63,8 @@ RunImageCheck() {
         ; Debug: Show OCR result (remove this line after testing)
         ; MsgBox "OCR Result: " . ocrText, "Debug", "T2"
 
+        FileDelete originalImagePath
+
         ; 4. Search for the keyword in the OCR result
         if InStr(ocrText, SEARCH_KEYWORD) {
             SoundBeep 1000, 200 ; Higher pitch beep for success
