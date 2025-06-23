@@ -14,7 +14,7 @@ global NEXT_PAGE_KEY := "a" 	     ;
 global MAX_LOOP := 500
 global SEARCH_KEYWORDS := ["冰","雪","少女", "日落"]        ; Add more as needed
 global IGNORE_KEYWORDS := ["冰河", "雪月花", "永雪"]         ; Add more as needed
-global FIXED_NUMBER := 2    ; If FIXED_NUMBER more keywords than ignores, stop
+global FIXED_NUMBER := 1    ; If FIXED_NUMBER more keywords than ignores, stop
 
 ; ——— Screen Capture Area ———
 global CAPTURE_X := 380
