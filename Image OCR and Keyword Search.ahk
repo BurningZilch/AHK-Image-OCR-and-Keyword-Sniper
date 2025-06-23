@@ -9,15 +9,19 @@ global TESSERACT_PATH := "tesseract" ; Path to your Tesseract executable
 global FFMPEG_PATH := "ffmpeg"       ; Path to your FFmpeg executable
 global SCREENSHOTS_FOLDER := A_ScriptDir "\Screenshots\"
 global OCR_LANGUAGE := "chi_sim"     ; Tesseract language for OCR (Simplified Chinese)
-global SEARCH_KEYWORD := "冰"        ; The keyword to search for in the OCR text
 global NEXT_PAGE_KEY := "a" 	     ;
-global MAX_LOOP := 30
+global MAX_LOOP := 100
+global SEARCH_KEYWORDS := ["冰", "少女", "冬"]        ; Add more as needed
+global IGNORE_KEYWORDS := ["冰河"]         ; Add more as needed
+
 
 ; ——— Screen Capture Area ———
-global CAPTURE_X := 340
-global CAPTURE_Y := 260
-global CAPTURE_W := 230
-global CAPTURE_H := 380
+global CAPTURE_X := 380
+global CAPTURE_Y := 290
+global CAPTURE_W := 200
+global CAPTURE_H := 310
+
+SelectCaptureArea()
 
 ; ——————————————————————————————————————————————————————————————————————————————————————————————————
 ; ——— Initialization ———
@@ -46,33 +50,37 @@ if !DirExist(SCREENSHOTS_FOLDER) {
 
 RunImageCheck() {
     Loop MAX_LOOP {
-        Send NEXT_PAGE_KEY ; Sends the 'a' key
-        Sleep 200
+        Send NEXT_PAGE_KEY
+        Sleep 100
 
-        ; 1. Capture and save the designated screen area
         fileName := CaptureScreenArea(CAPTURE_X, CAPTURE_Y, CAPTURE_W, CAPTURE_H)
         originalImagePath := SCREENSHOTS_FOLDER . fileName
-        
-        ; 2. Preprocess the image (convert to grayscale and adjust contrast)
+
         processedImagePath := SCREENSHOTS_FOLDER . "processed_" . fileName
         PreprocessImage(originalImagePath, processedImagePath)
 
-        ; 3. Perform OCR on the processed image
         ocrText := PerformOCR(processedImagePath)
-
-        ; Debug: Show OCR result (remove this line after testing)
-        ; MsgBox "OCR Result: " . ocrText, "Debug", "T2"
 
         FileDelete originalImagePath
 
-        ; 4. Search for the keyword in the OCR result
-        if InStr(ocrText, SEARCH_KEYWORD) {
-            SoundBeep 1000, 200 ; Higher pitch beep for success
+        ; Count keyword hits
+        totalKeywordCount := 0
+        for each, kw in SEARCH_KEYWORDS {
+            totalKeywordCount += CountOccurrences(ocrText, kw)
+        }
+
+        totalIgnoreCount := 0
+        for each, kw in IGNORE_KEYWORDS {
+            totalIgnoreCount += CountOccurrences(ocrText, kw)
+        }
+
+        if (totalKeywordCount > totalIgnoreCount) {
+            SoundBeep 1000, 200
             MsgBox "Keyword found!", "Success", "T0.5"
-            return ; Exit the function and loop
+            return
         }
     }
-    SoundBeep 500, 200 ; Lower pitch beep for failure
+    SoundBeep 500, 200
     MsgBox "Keyword not found after 30 attempts.", "Finished", "T1"
 }
 
@@ -136,6 +144,35 @@ PerformOCR(imagePath) {
         MsgBox "An error occurred during OCR: " . e.Message
         return ""
     }
+}
+
+CountOccurrences(text, keyword) {
+    count := 0
+    while pos := InStr(text, keyword, false, count + 1) {
+        count++
+    }
+    return count
+}
+
+SelectCaptureArea() {
+    global CAPTURE_X, CAPTURE_Y, CAPTURE_W, CAPTURE_H
+    CoordMode("Mouse", "Screen") 
+    MsgBox "Please move your mouse to the **top-left corner** of the area and press Ctrl"
+    ; Wait for Ctrl key press
+    KeyWait "Ctrl", "D"  ; Wait for Ctrl to be *pressed down*
+    MouseGetPos &x1, &y1
+
+    MsgBox "Top-left corner captured at: " x1 "," y1 "`nNow move to the **bottom-right corner** and press Ctrl again"
+    KeyWait "Ctrl", "D"
+    MouseGetPos &x2, &y2
+
+    ; Calculate coordinates and size
+    CAPTURE_X := Min(x1, x2)
+    CAPTURE_Y := Min(y1, y2)
+    CAPTURE_W := Abs(x2 - x1)
+    CAPTURE_H := Abs(y2 - y1)
+
+    MsgBox "Capture Area Set:`nX: " CAPTURE_X "`nY: " CAPTURE_Y "`nW: " CAPTURE_W "`nH: " CAPTURE_H
 }
 
 ; ——————————————————————————————————————————————————————————————————————————————————————————————————
