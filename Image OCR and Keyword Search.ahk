@@ -8,11 +8,12 @@
 global TESSERACT_PATH := "tesseract" ; Path to your Tesseract executable
 global FFMPEG_PATH := "ffmpeg"       ; Path to your FFmpeg executable
 global SCREENSHOTS_FOLDER := A_ScriptDir "\Screenshots\"
+global OCR_RESULT_FOLDER := A_ScriptDir "\OcrResults\"
 global OCR_LANGUAGE := "chi_sim"     ; Tesseract language for OCR (Simplified Chinese)
 global NEXT_PAGE_KEY := "a" 	     ;
 global MAX_LOOP := 100
-global SEARCH_KEYWORDS := ["冰", "少女", "冬"]        ; Add more as needed
-global IGNORE_KEYWORDS := ["冰河"]         ; Add more as needed
+global SEARCH_KEYWORDS := ["冰","雪"]        ; Add more as needed
+global IGNORE_KEYWORDS := ["冰河", "雪月花"]         ; Add more as needed
 
 
 ; ——— Screen Capture Area ———
@@ -35,6 +36,11 @@ OnExit(Shutdown)
 if !DirExist(SCREENSHOTS_FOLDER) {
     DirCreate SCREENSHOTS_FOLDER
 }
+
+if !DirExist(OCR_RESULT_FOLDER) {
+    DirCreate OCR_RESULT_FOLDER
+}
+
 
 ; ——————————————————————————————————————————————————————————————————————————————————————————————————
 ; ——— Hotkey ———
@@ -60,6 +66,12 @@ RunImageCheck() {
         PreprocessImage(originalImagePath, processedImagePath)
 
         ocrText := PerformOCR(processedImagePath)
+
+	; Save OCR result to a file
+	txtFileName := StrReplace(fileName, ".png", ".txt")
+	ocrTextPath := OCR_RESULT_FOLDER . txtFileName
+	FileAppend ocrText, ocrTextPath, "UTF-8"
+
 
         FileDelete originalImagePath
 
